@@ -1,0 +1,6 @@
+databaseChangeLog:
+  - include:
+      file: db/migration/v1/initial.yml
+  - include:
+      file: db/migration/v2/add_admin.yml
+

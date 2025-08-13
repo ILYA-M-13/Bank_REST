@@ -1,1 +1,152 @@
-# Здесь будет OpenAPI описание всех доступных эндпоинтов и моделей данных.
+openapi: 3.0.0
+info:
+  title: Bank Cards Management API
+  description: API для управления банковскими картами с аутентификацией пользователей
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: Локальный сервер разработки
+tags:
+  - name: cards
+    description: Операции с банковскими картами
+  - name: auth
+    description: Операции аутентификации
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Аутентификация пользователя и получение JWT токена
+      description: Проверяет учетные данные пользователя и возвращает JWT токен для доступа к защищенным ресурсам.
+      requestBody:
+        required: true
+        description: Данные для входа
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtResponse'
+        '401':
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Неверные учетные данные"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Пользователь не найден"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Ошибка сервера"
+
+  /cards:
+    get:
+      tags: [cards]
+      summary: Получить карты пользователя с возможностью фильтрации
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Поиск по имени владельца карты
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ACTIVE, BLOCKED, EXPIRED]
+          description: Фильтр по статусу карты
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+          description: Номер страницы
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+          description: Количество элементов на странице
+      responses:
+        '200':
+          description: Список карт пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardPage'
+    post:
+      tags: [cards]
+      summary: Создать новую карту (только для администратора)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardDto'
+      responses:
+        '200':
+          description: Созданная карта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDto'
+
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Логин или email пользователя
+          example: "user@example.com"
+        password:
+          type: string
+          description: Пароль пользователя
+          example: "password123"
+          format: password
+
+    JwtResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT токен для авторизации
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

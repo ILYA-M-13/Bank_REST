@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: bankcards
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: "admin1"
+              - column:
+                  name: password
+                  value: "$2a$10$kQ0en.pkyrGEPUZCnhjfoer5fNSQWEpNlKW.EGDnFEbvhJUf9EY/."
+              - column:
+                  name: full_name
+                  value: "Admin User"
+
+        - insert:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  valueComputed: (SELECT id FROM users WHERE username = 'admin1')
+              - column:
+                  name: role_id
+                  valueComputed: (SELECT id FROM roles WHERE name = 'ROLE_ADMIN')
